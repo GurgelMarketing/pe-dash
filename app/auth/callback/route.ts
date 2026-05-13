@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
+import type { EmailOtpType } from '@supabase/supabase-js';
 
 const ALLOWED_DOMAIN = 'ibge.gov.br';
 
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
 
   const token_hash = searchParams.get('token_hash');
-  const type       = searchParams.get('type') as 'magiclink' | 'email' | null;
+  const type       = searchParams.get('type') as EmailOtpType | null;
   const code       = searchParams.get('code');
   const next       = searchParams.get('next') ?? '/dashboard';
 
