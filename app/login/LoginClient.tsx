@@ -56,7 +56,7 @@ export function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-4">
+    <div className="fixed inset-0 bg-neutral-950 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo / título */}
         <div className="mb-8 text-center">
