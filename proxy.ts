@@ -26,8 +26,17 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isPublic = PUBLIC_PATHS.some(p => request.nextUrl.pathname.startsWith(p));
+  const isPublic   = PUBLIC_PATHS.some(p => request.nextUrl.pathname.startsWith(p));
+  const isLoginPage = request.nextUrl.pathname.startsWith('/login');
 
+  // Usuário autenticado tentando acessar /login → manda para o dashboard
+  if (user && isLoginPage) {
+    const dashUrl = request.nextUrl.clone();
+    dashUrl.pathname = '/dashboard';
+    return NextResponse.redirect(dashUrl);
+  }
+
+  // Usuário não autenticado em rota protegida → manda para /login
   if (!user && !isPublic) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
