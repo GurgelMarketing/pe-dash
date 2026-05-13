@@ -53,7 +53,7 @@ export function CallbackClient() {
         await new Promise<void>((resolve) => {
           const timer = setTimeout(resolve, 4000);
           const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (event) => {
+            (event: string) => {
               if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 clearTimeout(timer);
                 subscription.unsubscribe();
