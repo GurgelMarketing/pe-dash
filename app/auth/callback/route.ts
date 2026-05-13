@@ -28,8 +28,12 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return NextResponse.redirect(`${origin}/dashboard`);
     }
+    // ← error ainda está no escopo aqui
+    return NextResponse.redirect(
+      `${origin}/login?error=auth_error&detail=${encodeURIComponent(error.message)}`
+    );
   }
 
-  // Código inválido ou ausente → volta para login com erro
+  // Sem code na URL
   return NextResponse.redirect(`${origin}/login?error=no_code`);
 }
