@@ -17,6 +17,7 @@ const errorMessages: Record<string, string> = {
 export function LoginClient() {
   const searchParams  = useSearchParams();
   const errorParam    = searchParams.get('error');
+  const detailParam   = searchParams.get('detail');
 
   const [email,   setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -109,6 +110,11 @@ export function LoginClient() {
                 {error && (
                   <div className="bg-red-950/50 border border-red-800 rounded-lg px-3 py-2.5 text-sm text-red-300">
                     {error}
+                    {detailParam && (
+                      <div className="mt-1 text-xs text-red-400 font-mono break-all">
+                        {decodeURIComponent(detailParam)}
+                      </div>
+                    )}
                   </div>
                 )}
 
