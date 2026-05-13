@@ -1,4 +1,4 @@
-import type { KPIsGlobais } from '../../types';
+import type { KPIsGlobais, MetricaTecnico } from '../../types';
 
 export function calcularDelta(
   snapshotAtual: KPIsGlobais,
@@ -15,5 +15,18 @@ export function calcularDelta(
     pct_concluido:  parseFloat(
       (snapshotAtual.pct_concluido - snapshotAnterior.pct_concluido).toFixed(1)
     ),
+  };
+}
+
+export function calcularDeltaTecnico(
+  atual: MetricaTecnico,
+  anterior: MetricaTecnico,
+): Partial<MetricaTecnico> {
+  return {
+    nada_feito:   atual.nada_feito   - anterior.nada_feito,
+    em_andamento: atual.em_andamento - anterior.em_andamento,
+    acordada:     atual.acordada     - anterior.acordada,
+    abordada:     atual.abordada     - anterior.abordada,
+    sem_contato:  atual.sem_contato  - anterior.sem_contato,
   };
 }

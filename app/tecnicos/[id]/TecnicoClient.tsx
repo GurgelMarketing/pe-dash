@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Delta } from '@/components/ui/delta';
 import { calcularProdutividade } from '@/lib/analytics/produtividade';
+import { calcularDeltaTecnico } from '@/lib/analytics/evolution';
 import type { MetricaTecnico, Snapshot } from '@/types';
 import type { MetaProdutividade } from '@/lib/analytics/produtividade';
 import {
@@ -41,6 +43,7 @@ export function TecnicoClient({ nome }: Props) {
   const [snapshots,   setSnapshots]   = useState<Snapshot[]>([]);
   const [snapshotId,  setSnapshotId]  = useState('');
   const [metrica,     setMetrica]     = useState<MetricaTecnico | null>(null);
+  const [metricaPrev, setMetricaPrev] = useState<MetricaTecnico | null>(null);
   const [prod,        setProd]        = useState<MetaProdutividade | null>(null);
   const [empresas,    setEmpresas]    = useState<EmpresaItem[]>([]);
   const [historico,   setHistorico]   = useState<HistoricoPoint[]>([]);
@@ -80,19 +83,35 @@ export function TecnicoClient({ nome }: Props) {
 
   // Métricas e empresas do snapshot selecionado
   useEffect(() => {
-    if (!snapshotId) return;
+    if (!snapshotId || !snapshots.length) return;
     setLoading(true);
-    Promise.all([
+    const snapshotIdx = snapshots.findIndex(s => s.id === snapshotId);
+    const prevId = snapshotIdx >= 0 && snapshotIdx < snapshots.length - 1
+      ? snapshots[snapshotIdx + 1].id
+      : null;
+
+    const requests: Promise<unknown>[] = [
       fetch(`/api/tecnicos?snapshot_id=${snapshotId}`).then(r => r.json()),
       fetch(`/api/empresas?snapshot_id=${snapshotId}&responsavel=${encodeURIComponent(nome)}&page=0`).then(r => r.json()),
-    ]).then(([metricas, empData]) => {
+    ];
+    if (prevId) {
+      requests.push(fetch(`/api/tecnicos?snapshot_id=${prevId}`).then(r => r.json()));
+    }
+
+    Promise.all(requests).then(([metricas, empData, prevMetricas]) => {
       const m = (metricas as MetricaTecnico[]).find(t => t.responsavel === nome) ?? null;
       setMetrica(m);
       setProd(m ? calcularProdutividade(m) : null);
-      setEmpresas(empData.data ?? []);
+      setEmpresas((empData as { data?: EmpresaItem[] }).data ?? []);
+      const prev = prevMetricas
+        ? (prevMetricas as MetricaTecnico[]).find(t => t.responsavel === nome) ?? null
+        : null;
+      setMetricaPrev(prev);
       setLoading(false);
     });
-  }, [snapshotId, nome]);
+  }, [snapshotId, snapshots, nome]);
+
+  const deltaTecnico = metrica && metricaPrev ? calcularDeltaTecnico(metrica, metricaPrev) : undefined;
 
   const empresasFiltradas = empresas.filter(e =>
     !filtro ||
@@ -122,20 +141,23 @@ export function TecnicoClient({ nome }: Props) {
         <>
           {/* KPIs individuais */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: 'Carteira total',  value: metrica.total,                         color: 'text-white'      },
-              { label: 'Concluídas',      value: metrica.acordada + metrica.abordada,    color: 'text-emerald-400'},
-              { label: 'Nada Feito',      value: metrica.nada_feito,                    color: 'text-red-400'    },
-              { label: 'Em Andamento',    value: metrica.em_andamento,                  color: 'text-blue-400'   },
-              { label: 'Acordadas',       value: metrica.acordada,                      color: 'text-emerald-400'},
-              { label: 'Abordadas',       value: metrica.abordada,                      color: 'text-emerald-300'},
-              { label: 'VIP',             value: metrica.vip,                           color: 'text-yellow-400' },
-              { label: 'Sem contato',     value: metrica.sem_contato,                   color: 'text-orange-400' },
-            ].map(c => (
+            {([
+              { label: 'Carteira total', value: metrica.total,                      color: 'text-white',       delta: undefined                                                                               },
+              { label: 'Concluídas',     value: metrica.acordada + metrica.abordada, color: 'text-emerald-400', delta: deltaTecnico ? (deltaTecnico.acordada ?? 0) + (deltaTecnico.abordada ?? 0) : undefined },
+              { label: 'Nada Feito',     value: metrica.nada_feito,                  color: 'text-red-400',     delta: deltaTecnico?.nada_feito                                                               },
+              { label: 'Em Andamento',   value: metrica.em_andamento,                color: 'text-blue-400',    delta: deltaTecnico?.em_andamento                                                             },
+              { label: 'Acordadas',      value: metrica.acordada,                    color: 'text-emerald-400', delta: deltaTecnico?.acordada                                                                 },
+              { label: 'Abordadas',      value: metrica.abordada,                    color: 'text-emerald-300', delta: deltaTecnico?.abordada                                                                 },
+              { label: 'VIP',            value: metrica.vip,                         color: 'text-yellow-400',  delta: undefined                                                                               },
+              { label: 'Sem contato',    value: metrica.sem_contato,                 color: 'text-orange-400',  delta: deltaTecnico?.sem_contato                                                              },
+            ] as const).map(c => (
               <Card key={c.label} className="bg-neutral-900 border-neutral-800">
                 <CardContent className="p-4">
                   <p className="text-xs text-neutral-400 mb-1">{c.label}</p>
-                  <span className={`text-2xl font-bold tabular-nums ${c.color}`}>{c.value}</span>
+                  <div className="flex items-end justify-between">
+                    <span className={`text-2xl font-bold tabular-nums ${c.color}`}>{c.value}</span>
+                    <Delta value={c.delta} />
+                  </div>
                 </CardContent>
               </Card>
             ))}

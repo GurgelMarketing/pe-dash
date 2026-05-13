@@ -1,19 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { Delta } from '@/components/ui/delta';
 import type { KPIsGlobais } from '@/types';
 
 interface Props {
   kpis:  KPIsGlobais;
   delta?: Partial<KPIsGlobais>;
-}
-
-function Delta({ value }: { value?: number }) {
-  if (value === undefined || value === 0) return null;
-  const pos = value > 0;
-  return (
-    <span className={`text-xs font-medium ${pos ? 'text-emerald-400' : 'text-red-400'}`}>
-      {pos ? '↑' : '↓'} {Math.abs(value)}
-    </span>
-  );
 }
 
 export function KpiGrid({ kpis, delta }: Props) {

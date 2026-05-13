@@ -11,7 +11,7 @@ import { MunicipioRanking } from '@/components/dashboard/MunicipioRanking';
 import { TecnicoTable } from '@/components/dashboard/TecnicoTable';
 import { InsightsPanel } from '@/components/dashboard/InsightsPanel';
 import { SnapshotSelector } from '@/components/dashboard/SnapshotSelector';
-import { calcularDelta } from '@/lib/analytics/evolution';
+import { calcularDelta, calcularDeltaTecnico } from '@/lib/analytics/evolution';
 import { gerarInsights } from '@/lib/analytics/insights';
 import type { KPIsGlobais, MetricaTecnico, Insight, Snapshot } from '@/types';
 import type { MetaProdutividade, ResumoEquipe } from '@/lib/analytics/produtividade';
@@ -25,6 +25,7 @@ export function DashboardClient() {
   const [kpis,         setKpis]         = useState<KPIsGlobais | null>(null);
   const [kpisPrev,     setKpisPrev]     = useState<KPIsGlobais | null>(null);
   const [metricas,     setMetricas]     = useState<MetricaTecnico[]>([]);
+  const [metricasPrev, setMetricasPrev] = useState<MetricaTecnico[]>([]);
   const [apms,         setApms]         = useState<MetaProdutividade[]>([]);
   const [resumo,       setResumo]       = useState<ResumoEquipe | null>(null);
   const [pesquisaData, setPesquisaData] = useState<PesquisaData[]>([]);
@@ -32,7 +33,6 @@ export function DashboardClient() {
   const [insights,     setInsights]     = useState<Insight[]>([]);
   const [loading,      setLoading]      = useState(true);
 
-  // Carrega lista de snapshots e seleciona o mais recente
   useEffect(() => {
     fetch('/api/snapshots')
       .then(r => r.json())
@@ -53,7 +53,7 @@ export function DashboardClient() {
       fetch(`/api/empresas?snapshot_id=${sid}&page=0`).then(r => r.json()),
     ]);
 
-    const kpisData:    KPIsGlobais     = kpisRes;
+    const kpisData:     KPIsGlobais      = kpisRes;
     const metricasData: MetricaTecnico[] = tecnicosRes;
 
     setKpis(kpisData);
@@ -61,31 +61,35 @@ export function DashboardClient() {
     setApms(prodRes.apms ?? []);
     setResumo(prodRes.resumo ?? null);
 
-    // Busca snapshot anterior para delta
+    // Busca snapshot anterior para deltas globais e por técnico
     const snapshotIdx = snapshots.findIndex(s => s.id === sid);
     if (snapshotIdx >= 0 && snapshotIdx < snapshots.length - 1) {
       const prevId = snapshots[snapshotIdx + 1].id;
-      const prevKpis = await fetch(`/api/kpis?snapshot_id=${prevId}`).then(r => r.json());
+      const [prevKpis, prevMetricas] = await Promise.all([
+        fetch(`/api/kpis?snapshot_id=${prevId}`).then(r => r.json()),
+        fetch(`/api/tecnicos?snapshot_id=${prevId}`).then(r => r.json()),
+      ]);
       setKpisPrev(prevKpis);
+      setMetricasPrev(prevMetricas);
     } else {
       setKpisPrev(null);
+      setMetricasPrev([]);
     }
 
-    // Agrega dados de pesquisa e município a partir das empresas
     const empresas: Array<{ pesquisa: string; situacao: string; municipio: string }> =
       empresasRes.data ?? [];
 
-    const pesquisaMap = new Map<string, PesquisaData>();
+    const pesquisaMap  = new Map<string, PesquisaData>();
     const municipioMap = new Map<string, MunicipioData>();
 
     for (const e of empresas) {
       const p = e.pesquisa || 'Outros';
       if (!pesquisaMap.has(p)) pesquisaMap.set(p, { pesquisa: p, nada_feito: 0, em_andamento: 0, acordada: 0, abordada: 0 });
       const pd = pesquisaMap.get(p)!;
-      if (e.situacao === 'Nada Feito')             pd.nada_feito++;
+      if (e.situacao === 'Nada Feito')               pd.nada_feito++;
       else if (e.situacao === 'Abordagem Em Andamento') pd.em_andamento++;
-      else if (e.situacao === 'Acordada')          pd.acordada++;
-      else if (e.situacao === 'Abordada')          pd.abordada++;
+      else if (e.situacao === 'Acordada')            pd.acordada++;
+      else if (e.situacao === 'Abordada')            pd.abordada++;
 
       const m = e.municipio || 'Sem município';
       if (!municipioMap.has(m)) municipioMap.set(m, { municipio: m, total: 0, concluidas: 0 });
@@ -97,10 +101,7 @@ export function DashboardClient() {
     setPesquisaData([...pesquisaMap.values()]);
     setMunicipios([...municipioMap.values()]);
 
-    // Insights
-    const ins = gerarInsights(kpisData, metricasData, prodRes.apms ?? []);
-    setInsights(ins);
-
+    setInsights(gerarInsights(kpisData, metricasData, prodRes.apms ?? []));
     setLoading(false);
   }, [snapshots]);
 
@@ -109,6 +110,15 @@ export function DashboardClient() {
   }, [snapshotId, loadData]);
 
   const delta = kpis && kpisPrev ? calcularDelta(kpis, kpisPrev) : undefined;
+
+  const deltaMetricas = metricas.length > 0 && metricasPrev.length > 0
+    ? new Map(
+        metricas.map(m => {
+          const prev = metricasPrev.find(p => p.responsavel === m.responsavel);
+          return [m.responsavel, prev ? calcularDeltaTecnico(m, prev) : undefined] as const;
+        })
+      )
+    : undefined;
 
   if (!snapshots.length) {
     return (
@@ -121,7 +131,6 @@ export function DashboardClient() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Seletor de snapshot */}
       <div className="flex justify-end">
         <SnapshotSelector value={snapshotId} onChange={(id) => id && setSnapshotId(id)} />
       </div>
@@ -154,7 +163,7 @@ export function DashboardClient() {
           <section>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <MunicipioRanking data={municipios} />
-              <TecnicoTable metricas={metricas} />
+              <TecnicoTable metricas={metricas} deltaMetricas={deltaMetricas} />
             </div>
           </section>
 

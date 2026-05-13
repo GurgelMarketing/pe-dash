@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Delta } from '@/components/ui/delta';
 import type { MetricaTecnico } from '@/types';
 
-interface Props { metricas: MetricaTecnico[] }
+interface Props {
+  metricas: MetricaTecnico[];
+  deltaMetricas?: Map<string, Partial<MetricaTecnico> | undefined>;
+}
 
-export function TecnicoTable({ metricas }: Props) {
+export function TecnicoTable({ metricas, deltaMetricas }: Props) {
   return (
     <Card className="bg-neutral-900 border-neutral-800">
       <CardHeader className="pb-2 pt-4 px-4">
@@ -40,10 +44,22 @@ export function TecnicoTable({ metricas }: Props) {
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums text-neutral-300">{m.total}</td>
                   <td className="px-3 py-2.5 text-right tabular-nums text-yellow-400">{m.vip}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-red-400">{m.nada_feito}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-blue-400">{m.em_andamento}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-emerald-400">{m.acordada}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-emerald-300">{m.abordada}</td>
+                  <td className="px-3 py-2.5 text-right">
+                    <span className="tabular-nums text-red-400">{m.nada_feito}</span>
+                    <Delta value={deltaMetricas?.get(m.responsavel)?.nada_feito} />
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <span className="tabular-nums text-blue-400">{m.em_andamento}</span>
+                    <Delta value={deltaMetricas?.get(m.responsavel)?.em_andamento} />
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <span className="tabular-nums text-emerald-400">{m.acordada}</span>
+                    <Delta value={deltaMetricas?.get(m.responsavel)?.acordada} />
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <span className="tabular-nums text-emerald-300">{m.abordada}</span>
+                    <Delta value={deltaMetricas?.get(m.responsavel)?.abordada} />
+                  </td>
                   <td className="px-3 py-2.5 text-right tabular-nums text-purple-400">{m.novas}</td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2 min-w-[120px]">
