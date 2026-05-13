@@ -5,14 +5,16 @@ const ALLOWED_DOMAIN = 'ibge.gov.br';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
 
-  if (!code) {
+  const token_hash = searchParams.get('token_hash');
+  const type       = searchParams.get('type') as 'magiclink' | 'email' | null;
+  const code       = searchParams.get('code');
+  const next       = searchParams.get('next') ?? '/dashboard';
+
+  if (!token_hash && !code) {
     return NextResponse.redirect(`${origin}/login?error=link_invalido`);
   }
 
-  // Cria a resposta de redirect primeiro — cookies serão escritos nela
   const response = NextResponse.redirect(`${origin}${next}`);
 
   const supabase = createServerClient(
@@ -29,13 +31,24 @@ export async function GET(request: NextRequest) {
     },
   );
 
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  let authError: Error | null = null;
+  let user: { email?: string } | null = null;
 
-  if (error || !data.user) {
+  if (token_hash && type) {
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash, type });
+    authError = error;
+    user      = data.user ?? null;
+  } else if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    authError = error;
+    user      = data.user ?? null;
+  }
+
+  if (authError || !user) {
     return NextResponse.redirect(`${origin}/login?error=autenticacao_falhou`);
   }
 
-  const email = data.user.email ?? '';
+  const email = user.email ?? '';
   if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
     await supabase.auth.signOut();
     return NextResponse.redirect(`${origin}/login?error=dominio_nao_autorizado`);
