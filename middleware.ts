@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = ['/login', '/auth'];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isPublic   = PUBLIC_PATHS.some(p => request.nextUrl.pathname.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some(p => request.nextUrl.pathname.startsWith(p));
   const isLoginPage = request.nextUrl.pathname.startsWith('/login');
 
   // Usuário autenticado tentando acessar /login → manda para o dashboard

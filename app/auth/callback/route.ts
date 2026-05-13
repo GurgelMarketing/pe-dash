@@ -1,55 +1,35 @@
-import { NextResponse, type NextRequest } from 'next/server';
+// app/auth/callback/route.ts
 import { createServerClient } from '@supabase/ssr';
-
-const ALLOWED_DOMAIN = 'ibge.gov.br';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
 
-  if (!code) {
-    return NextResponse.redirect(
-      `${origin}/login?error=autenticacao_falhou&detail=${encodeURIComponent('no_code')}`,
-    );
-  }
-
-  const successResponse = NextResponse.redirect(`${origin}${next}`);
-  const errorRedirect   = (detail: string) =>
-    NextResponse.redirect(
-      `${origin}/login?error=autenticacao_falhou&detail=${encodeURIComponent(detail)}`,
-    );
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
+  if (code) {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (cookiesToSet) =>
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            ),
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            successResponse.cookies.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
+      }
+    );
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-  if (error) {
-    return errorRedirect(error.message);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(`${origin}/dashboard`);
+    }
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const email = user?.email ?? '';
-
-  if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-    await supabase.auth.signOut();
-    return NextResponse.redirect(`${origin}/login?error=dominio_nao_autorizado`);
-  }
-
-  return successResponse;
+  // Código inválido ou ausente → volta para login com erro
+  return NextResponse.redirect(`${origin}/login?error=no_code`);
 }
