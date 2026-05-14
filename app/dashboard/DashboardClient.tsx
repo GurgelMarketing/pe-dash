@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { ContadorRegressivo } from '@/components/dashboard/ContadorRegressivo';
 import { KpiGrid } from '@/components/dashboard/KpiGrid';
 import { ProdutividadePanel } from '@/components/dashboard/ProdutividadePanel';
@@ -11,9 +11,10 @@ import { MunicipioRanking } from '@/components/dashboard/MunicipioRanking';
 import { TecnicoTable } from '@/components/dashboard/TecnicoTable';
 import { InsightsPanel } from '@/components/dashboard/InsightsPanel';
 import { SnapshotSelector } from '@/components/dashboard/SnapshotSelector';
+import { ConfiguracaoPanel } from '@/components/dashboard/ConfiguracaoPanel';
 import { calcularDelta, calcularDeltaTecnico } from '@/lib/analytics/evolution';
 import { gerarInsights } from '@/lib/analytics/insights';
-import type { KPIsGlobais, MetricaTecnico, Insight, Snapshot } from '@/types';
+import type { KPIsGlobais, MetricaTecnico, Insight, Snapshot, CampanhaConfig } from '@/types';
 import type { MetaProdutividade, ResumoEquipe } from '@/lib/analytics/produtividade';
 
 interface PesquisaData { pesquisa: string; nada_feito: number; em_andamento: number; acordada: number; abordada: number }
@@ -22,6 +23,8 @@ interface MunicipioData { municipio: string; total: number; concluidas: number }
 export function DashboardClient() {
   const [snapshots,    setSnapshots]    = useState<Snapshot[]>([]);
   const [snapshotId,   setSnapshotId]   = useState<string>('');
+  const [campanha,     setCampanha]     = useState<CampanhaConfig | null>(null);
+  const campanhaRef = useRef<CampanhaConfig | null>(null);
   const [kpis,         setKpis]         = useState<KPIsGlobais | null>(null);
   const [kpisPrev,     setKpisPrev]     = useState<KPIsGlobais | null>(null);
   const [metricas,     setMetricas]     = useState<MetricaTecnico[]>([]);
@@ -40,6 +43,9 @@ export function DashboardClient() {
         setSnapshots(data);
         if (data.length > 0) setSnapshotId(data[0].id);
       });
+    fetch('/api/configuracoes')
+      .then(r => r.json())
+      .then((cfg: CampanhaConfig) => { setCampanha(cfg); campanhaRef.current = cfg; });
   }, []);
 
   const loadData = useCallback(async (sid: string) => {
@@ -101,11 +107,18 @@ export function DashboardClient() {
     setPesquisaData([...pesquisaMap.values()]);
     setMunicipios([...municipioMap.values()]);
 
-    setInsights(gerarInsights(kpisData, metricasData, prodRes.apms ?? []));
+    setInsights(gerarInsights(kpisData, metricasData, prodRes.apms ?? [], campanhaRef.current ?? undefined));
     setLoading(false);
   }, [snapshots]);
 
   useEffect(() => {
+    if (snapshotId) loadData(snapshotId);
+  }, [snapshotId, loadData]);
+
+  // Recarrega produtividade quando config muda (para refletir novo período no painel)
+  const handleConfigChange = useCallback((cfg: CampanhaConfig) => {
+    campanhaRef.current = cfg;
+    setCampanha(cfg);
     if (snapshotId) loadData(snapshotId);
   }, [snapshotId, loadData]);
 
@@ -135,7 +148,9 @@ export function DashboardClient() {
         <SnapshotSelector value={snapshotId} onChange={(id) => id && setSnapshotId(id)} />
       </div>
 
-      <ContadorRegressivo />
+      <ConfiguracaoPanel config={campanha} onConfigChange={handleConfigChange} />
+
+      <ContadorRegressivo config={campanha} />
 
       {loading ? (
         <div className="text-neutral-500 text-sm py-8 text-center">Carregando dados...</div>

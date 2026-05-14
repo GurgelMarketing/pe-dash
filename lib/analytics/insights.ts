@@ -1,16 +1,19 @@
-import type { KPIsGlobais, MetricaTecnico, Insight } from '../../types';
+import type { KPIsGlobais, MetricaTecnico, Insight, CampanhaConfig } from '../../types';
 import type { MetaProdutividade } from './produtividade';
-import { diasUteisRestantes } from '../calendario/diasUteis';
-import { CAMPANHA } from '../calendario/diasUteis';
+import { diasUteisRestantes, diasUteisRestantesConfig, CAMPANHA } from '../calendario/diasUteis';
 
 export function gerarInsights(
   kpis: KPIsGlobais,
   metricas: MetricaTecnico[],
   prod: MetaProdutividade[],
+  cfg?: CampanhaConfig,
 ): Insight[] {
   const insights: Insight[] = [];
-  const diasRestantes = diasUteisRestantes();
-  const meta = CAMPANHA.META_DIARIA_APM;
+  const diasRestantes = cfg ? diasUteisRestantesConfig(cfg) : diasUteisRestantes();
+  const meta = cfg ? cfg.meta_diaria_apm : CAMPANHA.META_DIARIA_APM;
+  const fimLabel = cfg
+    ? new Date(cfg.campanha_fim + 'T12:00:00').toLocaleDateString('pt-BR')
+    : new Date(CAMPANHA.FIM.getTime() + 12 * 3600000).toLocaleDateString('pt-BR');
 
   // ── Insights de Situação ───────────────────────────────────────────────────
 
@@ -87,7 +90,7 @@ export function gerarInsights(
     insights.push({
       tipo: 'warning',
       titulo: 'Campanha próxima do fim',
-      descricao: `Restam apenas ${diasRestantes} dias úteis até o fim das abordagens (25/06/2026).`,
+      descricao: `Restam apenas ${diasRestantes} dias úteis até o fim das abordagens (${fimLabel}).`,
       valor: diasRestantes,
     });
   }

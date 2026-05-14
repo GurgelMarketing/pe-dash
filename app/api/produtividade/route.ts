@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { calcularProdutividadeEquipe, resumoEquipe } from '@/lib/analytics/produtividade';
-import type { MetricaTecnico } from '@/types';
+import type { MetricaTecnico, CampanhaConfig } from '@/types';
 
 export async function GET(req: NextRequest) {
   const supabase   = getSupabaseServerClient();
   const snapshotId = req.nextUrl.searchParams.get('snapshot_id');
 
-  let query = supabase.from('metricas_por_tecnico').select('*');
-  if (snapshotId) query = query.eq('snapshot_id', snapshotId);
+  const [metricasResult, configResult] = await Promise.all([
+    (() => {
+      let q = supabase.from('metricas_por_tecnico').select('*');
+      if (snapshotId) q = q.eq('snapshot_id', snapshotId);
+      return q;
+    })(),
+    supabase.from('configuracoes').select('campanha_inicio, campanha_fim, meta_diaria_apm').eq('id', 'campanha').single(),
+  ]);
 
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (metricasResult.error) return NextResponse.json({ error: metricasResult.error.message }, { status: 500 });
 
-  const metricas = (data ?? []) as MetricaTecnico[];
-  const prod     = calcularProdutividadeEquipe(metricas);
-  const resumo   = resumoEquipe(prod);
+  const metricas = (metricasResult.data ?? []) as MetricaTecnico[];
+  const cfg      = (configResult.data ?? undefined) as CampanhaConfig | undefined;
+  const prod     = calcularProdutividadeEquipe(metricas, cfg);
+  const resumo   = resumoEquipe(prod, cfg);
 
   return NextResponse.json({ resumo, apms: prod });
 }

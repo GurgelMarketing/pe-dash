@@ -3,8 +3,11 @@ import {
   TOTAL_DIAS_UTEIS_CAMPANHA,
   diasUteisDecorridos,
   diasUteisRestantes,
+  diasUteisDecorridosConfig,
+  diasUteisRestantesConfig,
+  totalDiasUteisConfig,
 } from '../calendario/diasUteis';
-import type { MetricaTecnico } from '../../types';
+import type { MetricaTecnico, CampanhaConfig } from '../../types';
 
 export interface MetaProdutividade {
   responsavel: string;
@@ -23,12 +26,12 @@ export interface MetaProdutividade {
   status: 'no_prazo' | 'atencao' | 'critico' | 'concluido';
 }
 
-export function calcularProdutividade(metrica: MetricaTecnico): MetaProdutividade {
+export function calcularProdutividade(metrica: MetricaTecnico, cfg?: CampanhaConfig): MetaProdutividade {
   const concluidas     = metrica.acordada + metrica.abordada;
   const total_carteira = metrica.total;
-  const dias_dec       = diasUteisDecorridos();
-  const dias_rest      = diasUteisRestantes();
-  const meta_diaria    = CAMPANHA.META_DIARIA_APM;
+  const dias_dec       = cfg ? diasUteisDecorridosConfig(cfg) : diasUteisDecorridos();
+  const dias_rest      = cfg ? diasUteisRestantesConfig(cfg)  : diasUteisRestantes();
+  const meta_diaria    = cfg ? cfg.meta_diaria_apm            : CAMPANHA.META_DIARIA_APM;
 
   const ritmo_real = dias_dec > 0
     ? parseFloat((concluidas / dias_dec).toFixed(2))
@@ -68,8 +71,8 @@ export function calcularProdutividade(metrica: MetricaTecnico): MetaProdutividad
   };
 }
 
-export function calcularProdutividadeEquipe(metricas: MetricaTecnico[]): MetaProdutividade[] {
-  return metricas.map(calcularProdutividade);
+export function calcularProdutividadeEquipe(metricas: MetricaTecnico[], cfg?: CampanhaConfig): MetaProdutividade[] {
+  return metricas.map(m => calcularProdutividade(m, cfg));
 }
 
 export interface ResumoEquipe {
@@ -85,16 +88,17 @@ export interface ResumoEquipe {
   meta_diaria_equipe:    number;
 }
 
-export function resumoEquipe(prod: MetaProdutividade[]): ResumoEquipe {
-  const dias_dec   = diasUteisDecorridos();
-  const dias_rest  = diasUteisRestantes();
-  const total_dias = TOTAL_DIAS_UTEIS_CAMPANHA;
+export function resumoEquipe(prod: MetaProdutividade[], cfg?: CampanhaConfig): ResumoEquipe {
+  const dias_dec   = cfg ? diasUteisDecorridosConfig(cfg) : diasUteisDecorridos();
+  const dias_rest  = cfg ? diasUteisRestantesConfig(cfg)  : diasUteisRestantes();
+  const total_dias = cfg ? totalDiasUteisConfig(cfg)      : TOTAL_DIAS_UTEIS_CAMPANHA;
+  const meta       = cfg ? cfg.meta_diaria_apm            : CAMPANHA.META_DIARIA_APM;
 
   return {
     total_dias_campanha:   total_dias,
     dias_decorridos:       dias_dec,
     dias_restantes:        dias_rest,
-    pct_periodo_decorrido: parseFloat((dias_dec / total_dias * 100).toFixed(1)),
+    pct_periodo_decorrido: parseFloat((dias_dec / (total_dias || 1) * 100).toFixed(1)),
     apms_no_prazo:         prod.filter(p => p.status === 'no_prazo').length,
     apms_atencao:          prod.filter(p => p.status === 'atencao').length,
     apms_critico:          prod.filter(p => p.status === 'critico').length,
@@ -102,6 +106,6 @@ export function resumoEquipe(prod: MetaProdutividade[]): ResumoEquipe {
     media_ritmo_equipe:    parseFloat(
       (prod.reduce((s, p) => s + p.ritmo_real_por_dia, 0) / (prod.length || 1)).toFixed(2)
     ),
-    meta_diaria_equipe:    prod.length * CAMPANHA.META_DIARIA_APM,
+    meta_diaria_equipe:    prod.length * meta,
   };
 }

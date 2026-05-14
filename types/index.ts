@@ -67,12 +67,9 @@ export interface Insight {
 }
 
 export interface CampanhaConfig {
-  inicio: Date;
-  fim: Date;
-  metaDiariaApm: number;
-  timezone: string;
-  horarioInicio: number;
-  horarioFim: number;
+  campanha_inicio: string;  // ISO date 'YYYY-MM-DD'
+  campanha_fim:    string;
+  meta_diaria_apm: number;
 }
 
 export type { MetaProdutividade, ResumoEquipe } from '../lib/analytics/produtividade';

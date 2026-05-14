@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Delta } from '@/components/ui/delta';
 import { calcularProdutividade } from '@/lib/analytics/produtividade';
 import { calcularDeltaTecnico } from '@/lib/analytics/evolution';
-import type { MetricaTecnico, Snapshot } from '@/types';
+import type { MetricaTecnico, Snapshot, CampanhaConfig } from '@/types';
 import type { MetaProdutividade } from '@/lib/analytics/produtividade';
+import { CAMPANHA } from '@/lib/calendario/diasUteis';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts';
@@ -42,6 +43,7 @@ interface Props { nome: string }
 export function TecnicoClient({ nome }: Props) {
   const [snapshots,   setSnapshots]   = useState<Snapshot[]>([]);
   const [snapshotId,  setSnapshotId]  = useState('');
+  const [campanha,    setCampanha]    = useState<CampanhaConfig | null>(null);
   const [metrica,     setMetrica]     = useState<MetricaTecnico | null>(null);
   const [metricaPrev, setMetricaPrev] = useState<MetricaTecnico | null>(null);
   const [prod,        setProd]        = useState<MetaProdutividade | null>(null);
@@ -57,6 +59,9 @@ export function TecnicoClient({ nome }: Props) {
         setSnapshots(data);
         if (data.length > 0) setSnapshotId(data[0].id);
       });
+    fetch('/api/configuracoes')
+      .then(r => r.json())
+      .then((cfg: CampanhaConfig) => setCampanha(cfg));
   }, []);
 
   // Série histórica do técnico
@@ -101,7 +106,7 @@ export function TecnicoClient({ nome }: Props) {
     Promise.all(requests).then(([metricas, empData, prevMetricas]) => {
       const m = (metricas as MetricaTecnico[]).find(t => t.responsavel === nome) ?? null;
       setMetrica(m);
-      setProd(m ? calcularProdutividade(m) : null);
+      setProd(m ? calcularProdutividade(m, campanha ?? undefined) : null);
       setEmpresas((empData as { data?: EmpresaItem[] }).data ?? []);
       const prev = prevMetricas
         ? (prevMetricas as MetricaTecnico[]).find(t => t.responsavel === nome) ?? null
@@ -109,7 +114,7 @@ export function TecnicoClient({ nome }: Props) {
       setMetricaPrev(prev);
       setLoading(false);
     });
-  }, [snapshotId, snapshots, nome]);
+  }, [snapshotId, snapshots, nome, campanha]);
 
   const deltaTecnico = metrica && metricaPrev ? calcularDeltaTecnico(metrica, metricaPrev) : undefined;
 
@@ -205,7 +210,11 @@ export function TecnicoClient({ nome }: Props) {
                   <div>
                     <p className="text-xs text-neutral-400">Dias restantes</p>
                     <p className="text-lg font-bold text-white tabular-nums">{prod.dias_uteis_restantes}</p>
-                    <p className="text-xs text-neutral-500">até 25/06/2026</p>
+                    <p className="text-xs text-neutral-500">
+                      até {campanha
+                        ? new Date(campanha.campanha_fim + 'T12:00:00').toLocaleDateString('pt-BR')
+                        : new Date(CAMPANHA.FIM.getTime() + 12 * 3600000).toLocaleDateString('pt-BR')}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4">
