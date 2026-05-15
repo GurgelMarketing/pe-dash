@@ -97,7 +97,8 @@ export async function GET() {
       },
     });
   } catch (err) {
-    console.error('[relatorio] erro:', err);
+    const e = err instanceof Error ? err : new Error(String(err));
+    console.error('[relatorio] erro:', e.message, '\n', e.stack);
     return NextResponse.json({ error: 'Erro ao gerar relatorio.' }, { status: 500 });
   }
 }

@@ -385,9 +385,8 @@ export function gerarPdfBuffer(dados: DadosRelatorio): Promise<Buffer> {
       renderConclusao(doc, dados);
     } catch (err) {
       reject(err);
-      return;
+    } finally {
+      doc.end();
     }
-
-    doc.end();
   });
 }
