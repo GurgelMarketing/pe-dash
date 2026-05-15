@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { renderToBuffer } from '@react-pdf/renderer';
 import fs from 'fs';
 import path from 'path';
-import React from 'react';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { calcularProdutividadeEquipe, resumoEquipe } from '@/lib/analytics/produtividade';
 import { gerarInsights } from '@/lib/analytics/insights';
-import { RelatorioDocument } from '@/lib/relatorio/pdf';
+import { gerarPdfBuffer } from '@/lib/relatorio/pdf';
 import type { DadosRelatorio } from '@/lib/relatorio/pdf';
 import type { Snapshot, KPIsGlobais, MetricaTecnico, CampanhaConfig } from '@/types';
 
@@ -25,7 +23,7 @@ export async function GET() {
 
     const snapshots = (snapsRaw ?? []) as Snapshot[];
     if (snapshots.length === 0) {
-      return NextResponse.json({ error: 'Nenhum snapshot disponível.' }, { status: 404 });
+      return NextResponse.json({ error: 'Nenhum snapshot disponivel.' }, { status: 404 });
     }
 
     // 2. Buscar configurações da campanha
@@ -41,10 +39,10 @@ export async function GET() {
       meta_diaria_apm: 8,
     };
 
-    // 3. Buscar KPIs, métricas e produtividade para cada snapshot em paralelo
+    // 3. Buscar KPIs e métricas para cada snapshot
     const [kpisResults, metricasResults, prodResults] = await Promise.all([
       Promise.all(snapshots.map(s =>
-        supabase.from('kpis_por_snapshot').select('*').eq('snapshot_id', s.id).single()
+        supabase.from('kpis_por_snapshot').select('*').eq('snapshot_id', s.id)
       )),
       Promise.all(snapshots.map(s =>
         supabase.from('metricas_por_tecnico').select('*').eq('snapshot_id', s.id)
@@ -52,11 +50,13 @@ export async function GET() {
       supabase.from('metricas_por_tecnico').select('*').eq('snapshot_id', snapshots[0].id),
     ]);
 
-    const kpis = kpisResults.map(r => r.data as KPIsGlobais).filter(Boolean);
+    const kpis = kpisResults
+      .map(r => (Array.isArray(r.data) ? r.data[0] : r.data) as KPIsGlobais)
+      .filter(Boolean);
     const metricas = metricasResults.map(r => (r.data ?? []) as MetricaTecnico[]);
     const metricasAtual = (prodResults.data ?? []) as MetricaTecnico[];
 
-    // 4. Calcular produtividade com a config do banco
+    // 4. Calcular produtividade
     const produtividade = calcularProdutividadeEquipe(metricasAtual, cfg);
     const resumo        = resumoEquipe(produtividade, cfg);
 
@@ -76,21 +76,17 @@ export async function GET() {
     };
 
     // 7. Gerar PDF
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const element = React.createElement(RelatorioDocument, { dados }) as any;
-    const buffer = await renderToBuffer(element);
+    const buffer = await gerarPdfBuffer(dados);
 
     // 8. Salvar em relatorios/
-    const dataStr = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-    const filename = `relatorio_${dataStr}.pdf`;
-    const relatoriosDir = path.join(process.cwd(), 'relatorios');
+    const dataStr   = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
+    const filename  = `relatorio_${dataStr}.pdf`;
+    const relDir    = path.join(process.cwd(), 'relatorios');
 
-    if (!fs.existsSync(relatoriosDir)) {
-      fs.mkdirSync(relatoriosDir, { recursive: true });
-    }
-    fs.writeFileSync(path.join(relatoriosDir, filename), buffer);
+    if (!fs.existsSync(relDir)) fs.mkdirSync(relDir, { recursive: true });
+    fs.writeFileSync(path.join(relDir, filename), buffer);
 
-    // 9. Retornar PDF como download (Buffer → Uint8Array para NextResponse)
+    // 9. Retornar PDF como download
     const uint8 = new Uint8Array(buffer);
     return new NextResponse(uint8, {
       status: 200,
@@ -102,6 +98,6 @@ export async function GET() {
     });
   } catch (err) {
     console.error('[relatorio] erro:', err);
-    return NextResponse.json({ error: 'Erro ao gerar relatório.' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao gerar relatorio.' }, { status: 500 });
   }
 }
