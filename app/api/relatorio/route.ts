@@ -78,13 +78,16 @@ export async function GET() {
     // 7. Gerar PDF
     const buffer = await gerarPdfBuffer(dados);
 
-    // 8. Salvar em relatorios/
-    const dataStr   = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-    const filename  = `relatorio_${dataStr}.pdf`;
-    const relDir    = path.join(process.cwd(), 'relatorios');
-
-    if (!fs.existsSync(relDir)) fs.mkdirSync(relDir, { recursive: true });
-    fs.writeFileSync(path.join(relDir, filename), buffer);
+    // 8. Salvar em relatorios/ (best-effort — falha silenciosamente em ambientes read-only como Vercel)
+    const dataStr  = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
+    const filename = `relatorio_${dataStr}.pdf`;
+    try {
+      const relDir = path.join(process.cwd(), 'relatorios');
+      if (!fs.existsSync(relDir)) fs.mkdirSync(relDir, { recursive: true });
+      fs.writeFileSync(path.join(relDir, filename), buffer);
+    } catch (saveErr) {
+      console.warn('[relatorio] nao foi possivel salvar em disco:', saveErr);
+    }
 
     // 9. Retornar PDF como download
     const uint8 = new Uint8Array(buffer);
