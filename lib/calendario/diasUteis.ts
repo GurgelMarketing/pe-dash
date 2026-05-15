@@ -12,9 +12,11 @@ export const CAMPANHA = {
 } as const;
 
 export const FERIADOS_2026: Date[] = [
-  new Date('2026-04-21'),
-  new Date('2026-05-01'),
-  new Date('2026-06-11'),
+  new Date('2026-04-20'),  // Ponto Facultativo (seg)
+  new Date('2026-04-21'),  // Tiradentes (ter)
+  new Date('2026-05-01'),  // Dia do Trabalho (sex)
+  new Date('2026-06-04'),  // Corpus Christi (qui)
+  new Date('2026-06-05'),  // Ponto Facultativo (sex)
 ];
 
 export function isDiaUtil(date: Date): boolean {
