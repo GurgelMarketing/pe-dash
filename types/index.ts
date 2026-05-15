@@ -67,9 +67,10 @@ export interface Insight {
 }
 
 export interface CampanhaConfig {
-  campanha_inicio: string;  // ISO date 'YYYY-MM-DD'
-  campanha_fim:    string;
-  meta_diaria_apm: number;
+  campanha_inicio:     string;  // ISO date 'YYYY-MM-DD'
+  campanha_fim:        string;
+  meta_diaria_apm:     number;
+  feriados_dias_uteis: number;  // feriados em dias úteis a descontar do total
 }
 
 export type { MetaProdutividade, ResumoEquipe } from '../lib/analytics/produtividade';

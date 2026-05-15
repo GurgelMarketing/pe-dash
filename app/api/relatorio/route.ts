@@ -33,10 +33,12 @@ export async function GET() {
       .eq('id', 'campanha')
       .single();
 
-    const cfg: CampanhaConfig = cfgRaw ?? {
-      campanha_inicio: '2026-04-01',
-      campanha_fim:    '2026-06-25',
-      meta_diaria_apm: 8,
+    const cfg: CampanhaConfig = {
+      campanha_inicio:     '2026-04-01',
+      campanha_fim:        '2026-06-25',
+      meta_diaria_apm:     8,
+      feriados_dias_uteis: 0,
+      ...(cfgRaw ?? {}),
     };
 
     // 3. Buscar KPIs e métricas para cada snapshot

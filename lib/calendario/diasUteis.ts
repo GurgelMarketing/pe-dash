@@ -70,18 +70,15 @@ export function diasUteisDecorridosConfig(cfg: CampanhaConfig): number {
   return contarDiasUteis(inicio, cap);
 }
 
-export function diasUteisRestantesConfig(cfg: CampanhaConfig): number {
-  const hoje   = agoraEmBrasilia();
-  const inicio = new Date(cfg.campanha_inicio + 'T12:00:00');
-  const fim    = new Date(cfg.campanha_fim    + 'T12:00:00');
-  if (hoje > fim) return 0;
-  const cap = hoje < inicio ? inicio : hoje;
-  return contarDiasUteis(cap, fim);
-}
-
 export function totalDiasUteisConfig(cfg: CampanhaConfig): number {
-  return contarDiasUteis(
+  const raw = contarDiasUteis(
     new Date(cfg.campanha_inicio + 'T12:00:00'),
     new Date(cfg.campanha_fim    + 'T12:00:00'),
   );
+  return Math.max(0, raw - (cfg.feriados_dias_uteis ?? 0));
+}
+
+export function diasUteisRestantesConfig(cfg: CampanhaConfig): number {
+  // restantes = total - decorridos → decorridos + restantes = total sempre
+  return Math.max(0, totalDiasUteisConfig(cfg) - diasUteisDecorridosConfig(cfg));
 }
