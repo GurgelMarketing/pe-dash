@@ -12,6 +12,7 @@ import { TecnicoTable } from '@/components/dashboard/TecnicoTable';
 import { InsightsPanel } from '@/components/dashboard/InsightsPanel';
 import { SnapshotSelector } from '@/components/dashboard/SnapshotSelector';
 import { ConfiguracaoPanel } from '@/components/dashboard/ConfiguracaoPanel';
+import { RelatorioButton } from '@/components/dashboard/RelatorioButton';
 import { calcularDelta, calcularDeltaTecnico } from '@/lib/analytics/evolution';
 import { gerarInsights } from '@/lib/analytics/insights';
 import type { KPIsGlobais, MetricaTecnico, Insight, Snapshot, CampanhaConfig } from '@/types';
@@ -144,7 +145,8 @@ export function DashboardClient() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3">
+        <RelatorioButton />
         <SnapshotSelector value={snapshotId} onChange={(id) => id && setSnapshotId(id)} />
       </div>
 
