@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Delta } from '@/components/ui/delta';
 import { calcularProdutividade } from '@/lib/analytics/produtividade';
 import { calcularDeltaTecnico } from '@/lib/analytics/evolution';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { MetricaTecnico, Snapshot, CampanhaConfig } from '@/types';
 import type { MetaProdutividade } from '@/lib/analytics/produtividade';
 import { CAMPANHA } from '@/lib/calendario/diasUteis';
@@ -147,18 +148,21 @@ export function TecnicoClient({ nome }: Props) {
           {/* KPIs individuais */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {([
-              { label: 'Carteira total', value: metrica.total,                      color: 'text-white',       delta: undefined                                                                               },
-              { label: 'Concluídas',     value: metrica.acordada + metrica.abordada, color: 'text-emerald-400', delta: deltaTecnico ? (deltaTecnico.acordada ?? 0) + (deltaTecnico.abordada ?? 0) : undefined },
-              { label: 'Nada Feito',     value: metrica.nada_feito,                  color: 'text-red-400',     delta: deltaTecnico?.nada_feito                                                               },
-              { label: 'Em Andamento',   value: metrica.em_andamento,                color: 'text-blue-400',    delta: deltaTecnico?.em_andamento                                                             },
-              { label: 'Acordadas',      value: metrica.acordada,                    color: 'text-emerald-400', delta: deltaTecnico?.acordada                                                                 },
-              { label: 'Abordadas',      value: metrica.abordada,                    color: 'text-emerald-300', delta: deltaTecnico?.abordada                                                                 },
-              { label: 'VIP',            value: metrica.vip,                         color: 'text-yellow-400',  delta: undefined                                                                               },
-              { label: 'Sem contato',    value: metrica.sem_contato,                 color: 'text-orange-400',  delta: deltaTecnico?.sem_contato                                                              },
+              { label: 'Carteira total', value: metrica.total,                      color: 'text-white',       delta: undefined,                                                                                tooltip: 'Total de empresas sob responsabilidade deste APM nesta campanha. Ex: 206 = este técnico tem 206 CNPJs para abordar.'                          },
+              { label: 'Concluídas',     value: metrica.acordada + metrica.abordada, color: 'text-emerald-400', delta: deltaTecnico ? (deltaTecnico.acordada ?? 0) + (deltaTecnico.abordada ?? 0) : undefined, tooltip: 'Acordadas + Abordadas por este APM. Ex: 38 = 38 empresas finalizadas pelo técnico até esta data.'                                          },
+              { label: 'Nada Feito',     value: metrica.nada_feito,                  color: 'text-red-400',     delta: deltaTecnico?.nada_feito,                                                               tooltip: 'Empresas na carteira deste APM ainda sem nenhuma ação. Ex: 150 = 150 empresas aguardam a primeira abordagem.'                              },
+              { label: 'Em Andamento',   value: metrica.em_andamento,                color: 'text-blue-400',    delta: deltaTecnico?.em_andamento,                                                             tooltip: 'Empresas em processo ativo de contato por este APM. Ex: 18 = 18 negociações em curso.'                                                    },
+              { label: 'Acordadas',      value: metrica.acordada,                    color: 'text-emerald-400', delta: deltaTecnico?.acordada,                                                                 tooltip: 'Empresas que confirmaram participação com este APM. Ex: 25 = 25 entrevistas agendadas ou confirmadas.'                                     },
+              { label: 'Abordadas',      value: metrica.abordada,                    color: 'text-emerald-300', delta: deltaTecnico?.abordada,                                                                 tooltip: 'Pesquisas coletadas e finalizadas por este APM. Ex: 13 = 13 questionários já entregues.'                                                    },
+              { label: 'VIP',            value: metrica.vip,                         color: 'text-yellow-400',  delta: undefined,                                                                              tooltip: 'Empresas prioritárias na carteira deste APM. Ex: 12 = 12 CNPJs de alto peso que devem ser abordados primeiro.'                           },
+              { label: 'Sem contato',    value: metrica.sem_contato,                 color: 'text-orange-400',  delta: deltaTecnico?.sem_contato,                                                              tooltip: 'Empresas na carteira deste APM sem nenhuma via de contato. Ex: 5 = 5 empresas que precisam de busca ativa de dados.'                      },
             ] as const).map(c => (
               <Card key={c.label} className="bg-neutral-900 border-neutral-800">
                 <CardContent className="p-4">
-                  <p className="text-xs text-neutral-400 mb-1">{c.label}</p>
+                  <div className="flex items-start justify-between mb-1">
+                    <p className="text-xs text-neutral-400">{c.label}</p>
+                    <InfoTooltip text={c.tooltip} />
+                  </div>
                   <div className="flex items-end justify-between">
                     <span className={`text-2xl font-bold tabular-nums ${c.color}`}>{c.value}</span>
                     <Delta value={c.delta} />
@@ -177,38 +181,56 @@ export function TecnicoClient({ nome }: Props) {
               <CardContent className="px-4 pb-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="text-xs text-neutral-400">Ritmo real / dia</p>
+                    <div className="flex items-start justify-between mb-0.5">
+                      <p className="text-xs text-neutral-400">Ritmo real / dia</p>
+                      <InfoTooltip text="Média de empresas concluídas por dia útil desde o início da campanha. Ex: 2 = o técnico finaliza em média 2 empresas por dia útil trabalhado." />
+                    </div>
                     <p className="text-lg font-bold text-white tabular-nums">{prod.ritmo_real_por_dia}</p>
                     <p className="text-xs text-neutral-500">meta: {prod.meta_diaria}/dia</p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-400">Déficit acumulado</p>
+                    <div className="flex items-start justify-between mb-0.5">
+                      <p className="text-xs text-neutral-400">Déficit acumulado</p>
+                      <InfoTooltip text="Diferença entre o total esperado até hoje (meta × dias decorridos) e o realizado. Ex: +114 = o técnico está 114 abordagens atrás do esperado acumulado." />
+                    </div>
                     <p className={`text-lg font-bold tabular-nums ${prod.deficit_acumulado > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                       {prod.deficit_acumulado > 0 ? `+${prod.deficit_acumulado}` : prod.deficit_acumulado}
                     </p>
                     <p className="text-xs text-neutral-500">esperado: {prod.esperado_ate_hoje}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-400">Projeção final</p>
+                    <div className="flex items-start justify-between mb-0.5">
+                      <p className="text-xs text-neutral-400">Projeção final</p>
+                      <InfoTooltip text="Estimativa de conclusões até o fim da campanha mantendo o ritmo atual. Ex: 92 de 206 = ao ritmo de hoje, apenas 92 empresas serão concluídas no prazo." />
+                    </div>
                     <p className={`text-lg font-bold tabular-nums ${prod.vai_concluir_carteira ? 'text-emerald-400' : 'text-yellow-400'}`}>
                       {prod.projecao_final}
                     </p>
                     <p className="text-xs text-neutral-500">de {prod.total_carteira} empresas</p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-400">Ritmo necessário</p>
+                    <div className="flex items-start justify-between mb-0.5">
+                      <p className="text-xs text-neutral-400">Ritmo necessário</p>
+                      <InfoTooltip text="Abordagens por dia necessárias para zerar toda a carteira até o fim do período. Ex: 6,22/dia = o técnico precisa concluir pelo menos 7 empresas por dia." />
+                    </div>
                     <p className="text-lg font-bold text-white tabular-nums">
                       {isFinite(prod.ritmo_necessario) ? prod.ritmo_necessario : '∞'}
                     </p>
                     <p className="text-xs text-neutral-500">para zerar carteira</p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-400">Dias decorridos</p>
+                    <div className="flex items-start justify-between mb-0.5">
+                      <p className="text-xs text-neutral-400">Dias decorridos</p>
+                      <InfoTooltip text="Dias úteis já transcorridos desde o início da campanha (exclui fins de semana e feriados). Ex: 19 = 19 dias úteis se passaram desde o início da campanha." />
+                    </div>
                     <p className="text-lg font-bold text-white tabular-nums">{prod.dias_uteis_decorridos}</p>
                     <p className="text-xs text-neutral-500">dias úteis</p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-400">Dias restantes</p>
+                    <div className="flex items-start justify-between mb-0.5">
+                      <p className="text-xs text-neutral-400">Dias restantes</p>
+                      <InfoTooltip text="Dias úteis ainda disponíveis até o prazo final da campanha (exclui fins de semana e feriados). Ex: 27 = restam 27 dias úteis para concluir as abordagens." />
+                    </div>
                     <p className="text-lg font-bold text-white tabular-nums">{prod.dias_uteis_restantes}</p>
                     <p className="text-xs text-neutral-500">
                       até {campanha

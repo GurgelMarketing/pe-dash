@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { MetaProdutividade, ResumoEquipe } from '@/lib/analytics/produtividade';
 
 interface Props {
@@ -20,14 +21,17 @@ export function ProdutividadePanel({ apms, resumo }: Props) {
       {/* Resumo equipe */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'No prazo',  value: resumo.apms_no_prazo,  color: 'text-emerald-400' },
-          { label: 'Atenção',   value: resumo.apms_atencao,   color: 'text-yellow-400'  },
-          { label: 'Crítico',   value: resumo.apms_critico,   color: 'text-red-400'     },
-          { label: 'Concluído', value: resumo.apms_concluido, color: 'text-neutral-400' },
+          { label: 'No prazo',  value: resumo.apms_no_prazo,  color: 'text-emerald-400', tooltip: 'APMs com ritmo diário igual ou acima da meta — vão concluir a carteira dentro do prazo. Ex: 2 APMs no prazo = 2 técnicos mantêm ritmo suficiente.'           },
+          { label: 'Atenção',   value: resumo.apms_atencao,   color: 'text-yellow-400',  tooltip: 'APMs com ritmo entre 50% e 100% da meta — precisam acelerar para não atrasar. Ex: 1 APM em atenção = monitoramento intensificado.'                          },
+          { label: 'Crítico',   value: resumo.apms_critico,   color: 'text-red-400',     tooltip: 'APMs com ritmo abaixo de 50% da meta — risco real de não concluir a carteira. Ex: 3 APMs críticos = intervenção imediata necessária.'                       },
+          { label: 'Concluído', value: resumo.apms_concluido, color: 'text-neutral-400', tooltip: 'APMs que já zeraram toda a carteira antes do prazo. Ex: 0 APMs concluídos = ninguém terminou a carteira ainda.'                                             },
         ].map(item => (
           <Card key={item.label} className="bg-neutral-900 border-neutral-800">
             <CardContent className="p-4">
-              <p className="text-xs text-neutral-400 mb-1">{item.label}</p>
+              <div className="flex items-start justify-between mb-1">
+                <p className="text-xs text-neutral-400">{item.label}</p>
+                <InfoTooltip text={item.tooltip} />
+              </div>
               <span className={`text-2xl font-bold ${item.color}`}>{item.value}</span>
               <span className="text-xs text-neutral-500 ml-1">APMs</span>
             </CardContent>
