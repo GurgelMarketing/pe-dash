@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type React from 'react';
 
 interface InfoTooltipProps {
@@ -8,25 +9,33 @@ interface InfoTooltipProps {
 }
 
 export function InfoTooltip({ text }: InfoTooltipProps) {
-  const [open, setOpen]   = useState(false);
-  const [style, setStyle] = useState<React.CSSProperties>({});
-  const btnRef            = useRef<HTMLButtonElement>(null);
+  const [open,    setOpen]    = useState(false);
+  const [style,   setStyle]   = useState<React.CSSProperties>({});
+  const [mounted, setMounted] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleOpen = useCallback(() => {
     if (!btnRef.current) return;
     const r  = btnRef.current.getBoundingClientRect();
     const vw = window.innerWidth;
+    const vh = window.innerHeight;
 
-    const spaceBelow = window.innerHeight - r.bottom;
-    const top        = spaceBelow > 180 ? r.bottom + 6 : r.top - 6;
-    const translateY = spaceBelow > 180 ? '0' : '-100%';
+    // Vertical: abaixo por padrão; acima se perto do rodapé — sem transform
+    const spaceBelow = vh - r.bottom;
+    const posY: React.CSSProperties = spaceBelow > 180
+      ? { top:    r.bottom + 6 }
+      : { bottom: vh - r.top + 6 };
 
-    const rightSpace = vw - r.right;
-    setStyle(
-      rightSpace < 260
-        ? { position: 'fixed', top, left: r.left,        transform: `translateY(${translateY})` }
-        : { position: 'fixed', top, right: rightSpace,   transform: `translateY(${translateY})` }
-    );
+    // Horizontal: abre para a esquerda por padrão (borda direita alinhada com o botão).
+    // Inverte só se não há espaço suficiente à esquerda.
+    const tooltipWidth = 288; // w-72
+    const posX: React.CSSProperties = r.right >= tooltipWidth + 8
+      ? { right: vw - r.right }
+      : { left:  Math.max(8, r.left) };
+
+    setStyle({ position: 'fixed', ...posY, ...posX });
     setOpen(true);
   }, []);
 
@@ -45,13 +54,14 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
         i
       </button>
 
-      {open && (
+      {mounted && open && createPortal(
         <div
           style={style}
           className="z-[9999] w-72 max-w-[min(18rem,90vw)] p-3.5 rounded-xl bg-neutral-800 border border-neutral-700 shadow-2xl text-xs text-neutral-200 leading-relaxed pointer-events-none"
         >
           {text}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
