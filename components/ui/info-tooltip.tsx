@@ -19,7 +19,7 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
   const handleOpen = useCallback(() => {
     if (!btnRef.current) return;
     const r  = btnRef.current.getBoundingClientRect();
-    const vw = window.innerWidth;
+    const vw = document.documentElement.clientWidth; // exclui scrollbar
     const vh = window.innerHeight;
 
     // Vertical: abaixo por padrão; acima se perto do rodapé — sem transform
@@ -31,9 +31,10 @@ export function InfoTooltip({ text }: InfoTooltipProps) {
     // Horizontal: abre para a esquerda por padrão (borda direita alinhada com o botão).
     // Inverte só se não há espaço suficiente à esquerda.
     const tooltipWidth = 288; // w-72
-    const posX: React.CSSProperties = r.right >= tooltipWidth + 8
+    const leftEdgeIfLeft = r.right - tooltipWidth;
+    const posX: React.CSSProperties = leftEdgeIfLeft >= 8
       ? { right: vw - r.right }
-      : { left:  Math.max(8, r.left) };
+      : { left:  Math.min(Math.max(8, r.left), vw - tooltipWidth - 8) };
 
     setStyle({ position: 'fixed', ...posY, ...posX });
     setOpen(true);
