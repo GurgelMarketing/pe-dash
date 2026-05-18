@@ -51,12 +51,12 @@ export function ProdutividadePanel({ apms, resumo }: Props) {
               <thead>
                 <tr className="border-b border-neutral-800 text-xs text-neutral-500">
                   <th className="text-left px-4 py-2 font-medium">APM</th>
-                  <th className="text-right px-3 py-2 font-medium">Carteira</th>
+                  <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Carteira</th>
                   <th className="text-right px-3 py-2 font-medium">Concluídas</th>
                   <th className="text-right px-3 py-2 font-medium">Ritmo/dia</th>
-                  <th className="text-right px-3 py-2 font-medium">Meta/dia</th>
-                  <th className="text-right px-3 py-2 font-medium">Déficit</th>
-                  <th className="text-right px-3 py-2 font-medium">Projeção</th>
+                  <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Meta/dia</th>
+                  <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Déficit</th>
+                  <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Projeção</th>
                   <th className="text-right px-4 py-2 font-medium">Status</th>
                 </tr>
               </thead>
@@ -66,20 +66,20 @@ export function ProdutividadePanel({ apms, resumo }: Props) {
                   return (
                     <tr key={a.responsavel} className="border-b border-neutral-800/50 hover:bg-neutral-800/30">
                       <td className="px-4 py-2.5 font-medium text-neutral-200">{a.responsavel}</td>
-                      <td className="px-3 py-2.5 text-right text-neutral-300 tabular-nums">{a.total_carteira}</td>
+                      <td className="hidden sm:table-cell px-3 py-2.5 text-right text-neutral-300 tabular-nums">{a.total_carteira}</td>
                       <td className="px-3 py-2.5 text-right text-emerald-400 tabular-nums">{a.concluidas}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums">
                         <span className={a.ritmo_real_por_dia >= a.meta_diaria ? 'text-emerald-400' : a.ritmo_real_por_dia >= a.meta_diaria * 0.5 ? 'text-yellow-400' : 'text-red-400'}>
                           {a.ritmo_real_por_dia}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-right text-neutral-500 tabular-nums">{a.meta_diaria}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">
+                      <td className="hidden sm:table-cell px-3 py-2.5 text-right text-neutral-500 tabular-nums">{a.meta_diaria}</td>
+                      <td className="hidden sm:table-cell px-3 py-2.5 text-right tabular-nums">
                         <span className={a.deficit_acumulado > 0 ? 'text-red-400' : 'text-emerald-400'}>
                           {a.deficit_acumulado > 0 ? `+${a.deficit_acumulado}` : a.deficit_acumulado}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-right text-neutral-300 tabular-nums">{a.projecao_final}</td>
+                      <td className="hidden sm:table-cell px-3 py-2.5 text-right text-neutral-300 tabular-nums">{a.projecao_final}</td>
                       <td className="px-4 py-2.5 text-right">
                         <Badge className={`text-xs border ${cfg.cls}`}>{cfg.label}</Badge>
                       </td>

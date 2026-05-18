@@ -21,13 +21,13 @@ export function TecnicoTable({ metricas, deltaMetricas }: Props) {
             <thead>
               <tr className="border-b border-neutral-800 text-xs text-neutral-500">
                 <th className="text-left px-4 py-2 font-medium">APM</th>
-                <th className="text-right px-3 py-2 font-medium">Total</th>
-                <th className="text-right px-3 py-2 font-medium">VIP</th>
+                <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Total</th>
+                <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">VIP</th>
                 <th className="text-right px-3 py-2 font-medium">Nada Feito</th>
-                <th className="text-right px-3 py-2 font-medium">Andamento</th>
+                <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Andamento</th>
                 <th className="text-right px-3 py-2 font-medium">Acordadas</th>
-                <th className="text-right px-3 py-2 font-medium">Abordadas</th>
-                <th className="text-right px-3 py-2 font-medium">Novas</th>
+                <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Abordadas</th>
+                <th className="hidden sm:table-cell text-right px-3 py-2 font-medium">Novas</th>
                 <th className="px-4 py-2 font-medium">Progresso</th>
               </tr>
             </thead>
@@ -42,13 +42,13 @@ export function TecnicoTable({ metricas, deltaMetricas }: Props) {
                       {m.responsavel}
                     </Link>
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-neutral-300">{m.total}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-yellow-400">{m.vip}</td>
+                  <td className="hidden sm:table-cell px-3 py-2.5 text-right tabular-nums text-neutral-300">{m.total}</td>
+                  <td className="hidden sm:table-cell px-3 py-2.5 text-right tabular-nums text-yellow-400">{m.vip}</td>
                   <td className="px-3 py-2.5 text-right">
                     <span className="tabular-nums text-red-400">{m.nada_feito}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.nada_feito} />
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="hidden sm:table-cell px-3 py-2.5 text-right">
                     <span className="tabular-nums text-blue-400">{m.em_andamento}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.em_andamento} />
                   </td>
@@ -56,13 +56,13 @@ export function TecnicoTable({ metricas, deltaMetricas }: Props) {
                     <span className="tabular-nums text-emerald-400">{m.acordada}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.acordada} />
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="hidden sm:table-cell px-3 py-2.5 text-right">
                     <span className="tabular-nums text-emerald-300">{m.abordada}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.abordada} />
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-purple-400">{m.novas}</td>
+                  <td className="hidden sm:table-cell px-3 py-2.5 text-right tabular-nums text-purple-400">{m.novas}</td>
                   <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2 min-w-[120px]">
+                    <div className="flex items-center gap-2 min-w-[80px] sm:min-w-[120px]">
                       <div className="flex-1 bg-neutral-800 rounded-full h-1.5">
                         <div
                           className="bg-emerald-500 h-1.5 rounded-full"

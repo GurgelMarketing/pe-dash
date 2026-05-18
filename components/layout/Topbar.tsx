@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Menu } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 const titles: Record<string, string> = {
@@ -11,7 +12,11 @@ const titles: Record<string, string> = {
   '/tecnicos':  'Técnico',
 };
 
-export function Topbar() {
+interface Props {
+  onMenuClick: () => void;
+}
+
+export function Topbar({ onMenuClick }: Props) {
   const pathname = usePathname();
   const router   = useRouter();
   const title    = Object.entries(titles).find(([k]) => pathname.startsWith(k))?.[1] ?? 'PE-Dash';
@@ -37,8 +42,17 @@ export function Topbar() {
   }
 
   return (
-    <header className="h-14 border-b border-neutral-800 flex items-center justify-between px-6 shrink-0">
-      <h1 className="text-sm font-semibold text-neutral-200">{title}</h1>
+    <header className="h-14 border-b border-neutral-800 flex items-center justify-between px-4 md:px-6 shrink-0">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="md:hidden text-neutral-400 hover:text-neutral-200 transition-colors"
+          aria-label="Abrir menu"
+        >
+          <Menu size={20} />
+        </button>
+        <h1 className="text-sm font-semibold text-neutral-200">{title}</h1>
+      </div>
       {email && (
         <div className="flex items-center gap-3">
           <span className="text-xs text-neutral-400 hidden sm:block">
