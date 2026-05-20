@@ -178,8 +178,10 @@ export function DashboardClient() {
           <AndamentoChart metricas={metricas} />
 
           <section>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <TecnicoTable metricas={metricas} deltaMetricas={deltaMetricas} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <TecnicoTable metricas={metricas} deltaMetricas={deltaMetricas} />
+              </div>
               <MunicipioRanking data={municipios} />
             </div>
           </section>

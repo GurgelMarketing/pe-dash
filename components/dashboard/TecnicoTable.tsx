@@ -17,52 +17,53 @@ export function TecnicoTable({ metricas, deltaMetricas }: Props) {
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <div className="overflow-x-auto">
-          <table className="text-sm">
+          <table className="text-sm w-full">
             <thead>
               <tr className="border-b border-neutral-800 text-xs text-neutral-500">
-                <th className="text-left px-4 py-2 font-medium">APM</th>
-                <th className="text-right px-3 py-2 font-medium">Total</th>
-                <th className="text-right px-3 py-2 font-medium">VIP</th>
-                <th className="text-right px-3 py-2 font-medium">Nada Feito</th>
-                <th className="text-right px-3 py-2 font-medium">Andamento</th>
-                <th className="text-right px-3 py-2 font-medium">Acordadas</th>
-                <th className="text-right px-3 py-2 font-medium">Abordadas</th>
-                <th className="text-right px-3 py-2 font-medium">Novas</th>
-                <th className="px-4 py-2 font-medium">Progresso</th>
+                <th className="text-left px-3 py-2 font-medium">APM</th>
+                <th className="text-right px-2 py-2 font-medium">Total</th>
+                <th className="text-right px-2 py-2 font-medium">VIP</th>
+                <th className="text-right px-2 py-2 font-medium">N.Feito</th>
+                <th className="text-right px-2 py-2 font-medium">Andam.</th>
+                <th className="text-right px-2 py-2 font-medium">Acord.</th>
+                <th className="text-right px-2 py-2 font-medium">Aborд.</th>
+                <th className="text-right px-2 py-2 font-medium">Novas</th>
+                <th className="px-2 py-2 font-medium">Prog.</th>
               </tr>
             </thead>
             <tbody>
               {metricas.map(m => (
                 <tr key={m.responsavel} className="border-b border-neutral-800/50 hover:bg-neutral-800/30">
-                  <td className="px-4 py-2.5 font-medium whitespace-nowrap">
+                  <td className="px-3 py-2.5 font-medium max-w-[160px]">
                     <Link
                       href={`/tecnicos/${encodeURIComponent(m.responsavel)}`}
-                      className="text-blue-400 hover:text-blue-300 hover:underline"
+                      title={m.responsavel}
+                      className="text-blue-400 hover:text-blue-300 hover:underline block truncate"
                     >
                       {m.responsavel}
                     </Link>
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-neutral-300">{m.total}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-yellow-400">{m.vip}</td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-2 py-2.5 text-right tabular-nums text-neutral-300">{m.total}</td>
+                  <td className="px-2 py-2.5 text-right tabular-nums text-yellow-400">{m.vip}</td>
+                  <td className="px-2 py-2.5 text-right">
                     <span className="tabular-nums text-red-400">{m.nada_feito}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.nada_feito} />
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-2 py-2.5 text-right">
                     <span className="tabular-nums text-blue-400">{m.em_andamento}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.em_andamento} />
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-2 py-2.5 text-right">
                     <span className="tabular-nums text-emerald-400">{m.acordada}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.acordada} />
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-2 py-2.5 text-right">
                     <span className="tabular-nums text-emerald-300">{m.abordada}</span>
                     <Delta value={deltaMetricas?.get(m.responsavel)?.abordada} />
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-purple-400">{m.novas}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2 min-w-[120px]">
+                  <td className="px-2 py-2.5 text-right tabular-nums text-purple-400">{m.novas}</td>
+                  <td className="px-2 py-2.5">
+                    <div className="flex items-center gap-1.5 min-w-[90px]">
                       <div className="flex-1 bg-neutral-800 rounded-full h-1.5">
                         <div
                           className="bg-emerald-500 h-1.5 rounded-full"
